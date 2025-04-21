@@ -14,6 +14,14 @@ app.get("/api/analyze", async (req, res) => {
     );
     const raw = await response.json();
 
+    // ✅ Проверка: это точно массив с данными?
+    if (!Array.isArray(raw)) {
+      return res.status(400).json({
+        error: "Ошибка анализа",
+        details: raw.msg || "Неверный ответ от Binance API"
+      });
+    }
+
     const candles = raw.map(c => ({
       openTime: c[0],
       open: parseFloat(c[1]),
@@ -63,8 +71,12 @@ app.get("/api/analyze", async (req, res) => {
     }
 
     const entry = lastClose;
-    const sl = direction === "LONG" ? +(entry * 0.985).toFixed(2) : +(entry * 1.015).toFixed(2);
-    const tp1 = direction === "LONG" ? +(entry * 1.015).toFixed(2) : +(entry * 0.985).toFixed(2);
+    const sl = direction === "LONG"
+      ? +(entry * 0.985).toFixed(2)
+      : +(entry * 1.015).toFixed(2);
+    const tp1 = direction === "LONG"
+      ? +(entry * 1.015).toFixed(2)
+      : +(entry * 0.985).toFixed(2);
 
     const confidence =
       (direction === "LONG" && lastRSI < 40 && lastClose > lastEMA) ||
@@ -82,7 +94,10 @@ app.get("/api/analyze", async (req, res) => {
     });
 
   } catch (err) {
-    res.status(500).json({ error: "Ошибка анализа", details: err.message });
+    res.status(500).json({
+      error: "Ошибка анализа",
+      details: err.message
+    });
   }
 });
 
@@ -116,7 +131,9 @@ function calculateRSI(closes, period = 14) {
 
 function calculateEMA(closes, period = 21) {
   const k = 2 / (period + 1);
-  let emaArray = [closes.slice(0, period).reduce((a, b) => a + b, 0) / period];
+  let emaArray = [
+    closes.slice(0, period).reduce((a, b) => a + b, 0) / period
+  ];
 
   for (let i = period; i < closes.length; i++) {
     const price = closes[i];
